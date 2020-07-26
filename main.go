@@ -35,8 +35,8 @@ type Configuration struct {
 }
 
 var myConfiguration = Configuration{
-	CacheDirCircles: "./heatmapTiles",
-	CacheDirBlocks:  "./blocksTiles",
+	CacheDirCircles: "./global_circles",
+	CacheDirBlocks:  "./global_blocks",
 
 	CacheEnabled: true,
 
@@ -47,7 +47,7 @@ var myConfiguration = Configuration{
 	PostgresDatabase: "database",
 	PostgresDebugLog: false,
 
-	WebservicePort: 8000,
+	WebservicePort: 8080,
 }
 
 var (
