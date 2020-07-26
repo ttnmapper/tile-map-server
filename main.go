@@ -35,8 +35,8 @@ type Configuration struct {
 }
 
 var myConfiguration = Configuration{
-	CacheDirCircles: "./global_circles",
-	CacheDirBlocks:  "./global_blocks",
+	CacheDirCircles: "./tile_cache/global_circles",
+	CacheDirBlocks:  "./tile_cache/global_blocks",
 
 	CacheEnabled: true,
 
