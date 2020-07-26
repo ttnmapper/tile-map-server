@@ -61,6 +61,11 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	log.Println("Cache enabled: ", myConfiguration.CacheEnabled)
+	log.Println("Tile in cache: ", tileExistInCache)
+	log.Println("Tile outdated: ", tileInCacheOutdated)
+	log.Println("Single gateway: ", singleGateway)
+
 	// Only cache global tiles, not per gateway tiles
 	if myConfiguration.CacheEnabled && tileExistInCache && !tileInCacheOutdated && !singleGateway {
 		fmt.Printf("serving from cache\n")
