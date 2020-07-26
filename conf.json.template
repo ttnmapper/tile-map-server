@@ -1,0 +1,15 @@
+{
+  "CacheDirCircles":    "global_circles",
+  "CacheDirBlocks":     "global_blocks",
+
+  "CacheEnabled":   true,
+
+  "PostgresHost":           "localhost",
+  "PostgresPort":           5432,
+  "PostgresUser":           "user",
+  "PostgresPassword":       "password",
+  "PostgresDatabase":       "database",
+  "PostgresDebugLog":       false,
+
+  "WebservicePort":    "8080"
+}
