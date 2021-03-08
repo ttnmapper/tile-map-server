@@ -1,5 +1,4 @@
-heatmapTiles/*
-blocksTiles/*
+tile_cache/*
 
 *.6
 *.8

@@ -7,14 +7,14 @@ COPY . ./
 # Building using -mod=vendor, which will utilize the v
 #RUN go get
 #RUN go mod vendor
-RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o app
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o tile-map-server
 
 #FROM alpine:3.8
 FROM scratch
 
 WORKDIR /root/
 
-COPY --from=builder /go-modules/app .
+COPY --from=builder /go-modules/tile-map-server .
 COPY conf.json .
 
-CMD ["./app"]
+CMD ["./tile-map-server"]
