@@ -71,7 +71,9 @@
 
     mymap.on('click', onMapClick);
 
-    var coveragetiles = L.tileLayer('http://localhost:8000/circles/{z}/{x}/{y}.png', {
+    // var coveragetiles = L.tileLayer('http://localhost:8080/circles/{z}/{x}/{y}.png', {
+    // var coveragetiles = L.tileLayer('https://tms.ttnmapper.org/circles/{z}/{x}/{y}.png', {
+    	var coveragetiles = L.tileLayer('https://ttnmapperfsa4if0y-tilemapserver.functions.fnc.fr-par.scw.cloud/circles/{z}/{x}/{y}.png', {
         maxNativeZoom: 19,
         maxZoom: 20,
         zIndex: 10,

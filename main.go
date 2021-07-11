@@ -31,7 +31,7 @@ type Configuration struct {
 	PostgresDatabase string `env:"POSTGRES_DATABASE"`
 	PostgresDebugLog bool   `env:"POSTGRES_DEBUG_LOG"`
 
-	WebservicePort int
+	ListenAddress string `env:"LISTEN_ADDRESS"`
 }
 
 var myConfiguration = Configuration{
@@ -47,7 +47,7 @@ var myConfiguration = Configuration{
 	PostgresDatabase: "database",
 	PostgresDebugLog: false,
 
-	WebservicePort: 8080,
+	ListenAddress: ":8080",
 }
 
 var (
@@ -152,19 +152,18 @@ func main() {
 	prometheus.MustRegister(promTmsGatewaySelectDuration)
 
 	log.Println("Starting server")
-	router := mux.NewRouter().StrictSlash(true)
+	router := mux.NewRouter().UseEncodedPath() //.StrictSlash(true)
 	router.Use(prometheusMiddleware)
 	router.HandleFunc("/", Index)
 	router.Handle("/metrics", promhttp.Handler())
 
 	// Tile endpoints
-	router.HandleFunc("/circles/{z}/{x}/{y}", GetCirclesTile)
-	router.HandleFunc("/blocks/{z}/{x}/{y}", GetBlocksTile)
-	router.HandleFunc("/gateway-circles/{gateway}/{z}/{x}/{y}", GetCirclesTile)
-	router.HandleFunc("/gateway-blocks/{gateway}/{z}/{x}/{y}", GetBlocksTile)
+	router.HandleFunc("/circles/network/{network_id}/{z}/{x}/{y}", GetCirclesTile)
+	router.HandleFunc("/blocks/network/{network_id}/{z}/{x}/{y}", GetBlocksTile)
+	router.HandleFunc("/circles/gateway/{network_id}/{gateway_id}/{z}/{x}/{y}", GetCirclesTile)
+	router.HandleFunc("/blocks/gateway/{network_id}/{gateway_id}/{z}/{x}/{y}", GetBlocksTile)
 
-	listenInfo := fmt.Sprintf("0.0.0.0:%d", myConfiguration.WebservicePort)
-	log.Fatal(http.ListenAndServe(listenInfo, router))
+	log.Fatal(http.ListenAndServe(myConfiguration.ListenAddress, router))
 
 }
 

@@ -6,22 +6,28 @@ import (
 	"github.com/gorilla/mux"
 	"image"
 	"image/png"
-	"io"
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 	"ttnmapper-tms/types"
 )
 
 func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	gatewayId, singleGateway := vars["gateway"]
+	networkId := vars["network_id"]
+	gatewayId, singleGateway := vars["gateway_id"]
+
+	// We've chosen to use mux.NewRouter().UseEncodedPath() which will return the path variables in encoded form.
+	// This is necessary to correctly pass NS_TTS:// (two forward slashes).
+	// Decode now.
+	networkId, _ = url.QueryUnescape(networkId)
+	gatewayId, _ = url.QueryUnescape(gatewayId)
 
 	z, err := strconv.Atoi(vars["z"])
 	if err != nil {
@@ -44,22 +50,22 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("Circles tile: %d/%d/%d\t", z, x, y)
+	log.Printf("Circles tile %s - %s: %d/%d/%d\t", networkId, gatewayId, z, x, y)
 
-	tileFileName := fmt.Sprintf("%s/%d/%d/%d.png", myConfiguration.CacheDirCircles, z, x, y)
-
-	tileInCacheOutdated := true
-	tileExistInCache := false
-	if file, err := os.Stat(tileFileName); err == nil {
-		tileExistInCache = true
-
-		modifiedTime := file.ModTime()
-
-		// Check the last modified time of the file to see if the time is still new enough
-		if modifiedTime.Add(GetCacheDurationForZoom(z)).After(time.Now()) {
-			tileInCacheOutdated = false
-		}
-	}
+	//tileFileName := fmt.Sprintf("%s/%d/%d/%d.png", myConfiguration.CacheDirCircles, z, x, y)
+	//
+	//tileInCacheOutdated := true
+	//tileExistInCache := false
+	//if file, err := os.Stat(tileFileName); err == nil {
+	//	tileExistInCache = true
+	//
+	//	modifiedTime := file.ModTime()
+	//
+	//	// Check the last modified time of the file to see if the time is still new enough
+	//	if modifiedTime.Add(GetCacheDurationForZoom(z)).After(time.Now()) {
+	//		tileInCacheOutdated = false
+	//	}
+	//}
 
 	//log.Println("Cache enabled: ", myConfiguration.CacheEnabled)
 	//log.Println("Tile in cache: ", tileExistInCache)
@@ -67,49 +73,50 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 	//log.Println("Single gateway: ", singleGateway)
 
 	// Only cache global tiles, not per gateway tiles
-	if myConfiguration.CacheEnabled && tileExistInCache && !tileInCacheOutdated && !singleGateway {
-		fmt.Printf("serving from cache\n")
-		//promTmsCirclesCacheCount.Inc()
+	//if myConfiguration.CacheEnabled && tileExistInCache && !tileInCacheOutdated && !singleGateway {
+	//	fmt.Printf("serving from cache\n")
+	//	//promTmsCirclesCacheCount.Inc()
+	//
+	//	//Check if file exists and open
+	//	Openfile, err := os.Open(tileFileName)
+	//	defer Openfile.Close() //Close after function returns
+	//	if err != nil {
+	//		//File not found, send 404
+	//		http.Error(w, "File not found.", 404)
+	//		return
+	//	}
+	//
+	//	io.Copy(w, Openfile) //'Copy' the file to the client
+	//
+	//} else {
+	log.Printf("generating tile\n")
+	//promTmsCirclesCreateCount.Inc()
+	//tileStart := time.Now()
 
-		//Check if file exists and open
-		Openfile, err := os.Open(tileFileName)
-		defer Openfile.Close() //Close after function returns
-		if err != nil {
-			//File not found, send 404
-			http.Error(w, "File not found.", 404)
-			return
-		}
+	// Circles can overlap tiles. Generate a list of z19 tiles in the current tile, with a buffer around this tile.
+	// TODO: buffer should be calculated from zoom level.
+	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(x, y, z, 1)
 
-		io.Copy(w, Openfile) //'Copy' the file to the client
-
+	//log.Println("Selecting data")
+	var samples []types.Sample
+	if singleGateway {
+		samples = GetGatewaySamplesInRange(networkId, gatewayId, xMin, yMin, xMax, yMax)
 	} else {
-		log.Printf("generating tile\n")
-		//promTmsCirclesCreateCount.Inc()
-		//tileStart := time.Now()
-
-		// Circles can overlap tiles, so select data for 1 tile buffer on all sides
-		xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(x, y, z, 1)
-
-		//log.Println("Selecting data")
-		var samples []types.Sample
-		if singleGateway {
-			samples = GetGatewaySamplesInRange(gatewayId, xMin, yMin, xMax, yMax)
-		} else {
-			samples = GetGlobalSamplesInRange(xMin, yMin, xMax, yMax)
-		}
-
-		// Sort by RSSI ascending
-		sort.Sort(types.ByRssi(samples))
-
-		// Do something with tile data
-		tile := CreateCirclesTile(x, y, z, samples)
-
-		png.Encode(w, tile)
-
-		// Prometheus stats
-		//gatewayElapsed := time.Since(tileStart)
-		//promTmsCirclesDuration.Observe(float64(gatewayElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
+		samples = GetNetworkSamplesInRange(networkId, xMin, yMin, xMax, yMax)
 	}
+
+	// Sort by RSSI ascending
+	sort.Sort(types.ByRssi(samples))
+
+	// Do something with tile data
+	tile := CreateCirclesTile(x, y, z, samples)
+
+	png.Encode(w, tile)
+
+	// Prometheus stats
+	//gatewayElapsed := time.Since(tileStart)
+	//promTmsCirclesDuration.Observe(float64(gatewayElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
+	//}
 }
 
 func CreateCirclesTile(x int, y int, z int, samples []types.Sample) image.Image {
@@ -118,8 +125,8 @@ func CreateCirclesTile(x int, y int, z int, samples []types.Sample) image.Image 
 	// Draw image for x-1, y-1 to x+2, y+2
 
 	// Z19 indexes are:
-	xMin, yMin, _, _ := getZ19TileRange(x-1, y-1, z)
-	_, _, xMax, yMax := getZ19TileRange(x+1, y+1, z)
+	xMin, yMin, _, _ := getZ19TileRangeBuffer(x-1, y-1, z, 0)
+	_, _, xMax, yMax := getZ19TileRangeBuffer(x+1, y+1, z, 0)
 	xWidth := float64(xMax - xMin)
 	yWidth := float64(yMax - yMin)
 

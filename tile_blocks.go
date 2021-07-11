@@ -6,24 +6,28 @@ import (
 	"github.com/gorilla/mux"
 	"image"
 	"image/png"
-	"io"
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 	"ttnmapper-tms/types"
 )
 
 func GetBlocksTile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 
-	log.Println(prettyPrint(vars))
+	networkId := vars["network_id"]
+	gatewayId, singleGateway := vars["gateway_id"]
 
-	gatewayId, singleGateway := vars["gateway"]
+	// We've chosen to use mux.NewRouter().UseEncodedPath() which will return the path variables in encoded form.
+	// This is necessary to correctly pass NS_TTS:// (two forward slashes).
+	// Decode now.
+	networkId, _ = url.QueryUnescape(networkId)
+	gatewayId, _ = url.QueryUnescape(gatewayId)
 
 	z, err := strconv.Atoi(vars["z"])
 	if err != nil {
@@ -48,65 +52,65 @@ func GetBlocksTile(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Blocks tile: %d/%d/%d\t", z, x, y)
 
-	tileFileName := fmt.Sprintf("%s/%d/%d/%d.png", myConfiguration.CacheDirBlocks, z, x, y)
+	//tileFileName := fmt.Sprintf("%s/%d/%d/%d.png", myConfiguration.CacheDirBlocks, z, x, y)
+	//
+	//tileInCacheOutdated := true
+	//tileExistInCache := false
+	//if file, err := os.Stat(tileFileName); err == nil {
+	//	tileExistInCache = true
+	//
+	//	modifiedTime := file.ModTime()
+	//
+	//	// Check the last modified time of the file to see if the time is still new enough
+	//	if modifiedTime.Add(GetCacheDurationForZoom(z)).After(time.Now()) {
+	//		tileInCacheOutdated = false
+	//	}
+	//}
+	//
+	//// Only cache global tiles, not per gateway tiles
+	//if myConfiguration.CacheEnabled && tileExistInCache && !tileInCacheOutdated && !singleGateway {
+	//	fmt.Printf("serving from cache\n")
+	//	//promTmsBlocksCacheCount.Inc()
+	//
+	//	//Check if file exists and open
+	//	Openfile, err := os.Open(tileFileName)
+	//	defer Openfile.Close() //Close after function returns
+	//	if err != nil {
+	//		//File not found, send 404
+	//		http.Error(w, "File not found.", 404)
+	//		return
+	//	}
+	//
+	//	io.Copy(w, Openfile) //'Copy' the file to the client
+	//
+	//} else {
+	log.Printf("generating new tile\n")
+	//promTmsBlocksCreateCount.Inc()
+	//tileStart := time.Now()
 
-	tileInCacheOutdated := true
-	tileExistInCache := false
-	if file, err := os.Stat(tileFileName); err == nil {
-		tileExistInCache = true
+	// Circles can overlap tiles, so select data for 1 tile buffer on all sides
+	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(x, y, z, 0)
 
-		modifiedTime := file.ModTime()
-
-		// Check the last modified time of the file to see if the time is still new enough
-		if modifiedTime.Add(GetCacheDurationForZoom(z)).After(time.Now()) {
-			tileInCacheOutdated = false
-		}
-	}
-
-	// Only cache global tiles, not per gateway tiles
-	if myConfiguration.CacheEnabled && tileExistInCache && !tileInCacheOutdated && !singleGateway {
-		fmt.Printf("serving from cache\n")
-		//promTmsBlocksCacheCount.Inc()
-
-		//Check if file exists and open
-		Openfile, err := os.Open(tileFileName)
-		defer Openfile.Close() //Close after function returns
-		if err != nil {
-			//File not found, send 404
-			http.Error(w, "File not found.", 404)
-			return
-		}
-
-		io.Copy(w, Openfile) //'Copy' the file to the client
-
+	//log.Println("Selecting data")
+	var samples []types.Sample
+	if singleGateway {
+		samples = GetGatewaySamplesInRange(networkId, gatewayId, xMin, yMin, xMax, yMax)
 	} else {
-		log.Printf("generating new tile\n")
-		//promTmsBlocksCreateCount.Inc()
-		//tileStart := time.Now()
-
-		// Circles can overlap tiles, so select data for 1 tile buffer on all sides
-		xMin, yMin, xMax, yMax := getZ19TileRange(x, y, z)
-
-		//log.Println("Selecting data")
-		var samples []types.Sample
-		if singleGateway {
-			samples = GetGatewaySamplesInRange(gatewayId, xMin, yMin, xMax, yMax)
-		} else {
-			samples = GetGlobalSamplesInRange(xMin, yMin, xMax, yMax)
-		}
-
-		// Sort by RSSI ascending
-		sort.Sort(types.ByRssi(samples))
-
-		// Do something with tile data
-		tile := CreateGlobalBlocksTile(x, y, z, samples)
-
-		png.Encode(w, tile)
-
-		// Prometheus stats
-		//gatewayElapsed := time.Since(tileStart)
-		//promTmsBlocksDuration.Observe(float64(gatewayElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
+		samples = GetNetworkSamplesInRange(networkId, xMin, yMin, xMax, yMax)
 	}
+
+	// Sort by RSSI ascending
+	sort.Sort(types.ByRssi(samples))
+
+	// Do something with tile data
+	tile := CreateGlobalBlocksTile(x, y, z, samples)
+
+	png.Encode(w, tile)
+
+	// Prometheus stats
+	//gatewayElapsed := time.Since(tileStart)
+	//promTmsBlocksDuration.Observe(float64(gatewayElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
+	//}
 }
 
 func CreateGlobalBlocksTile(x int, y int, z int, samples []types.Sample) image.Image {
@@ -115,7 +119,7 @@ func CreateGlobalBlocksTile(x int, y int, z int, samples []types.Sample) image.I
 	// Draw image for x-1, y-1 to x+2, y+2
 
 	// Z19 indexes are:
-	xMin, yMin, xMax, yMax := getZ19TileRange(x, y, z)
+	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(x, y, z, 0)
 	xWidth := float64(xMax - xMin)
 	yWidth := float64(yMax - yMin) // always the same ??
 
