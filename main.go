@@ -153,6 +153,7 @@ func main() {
 
 	log.Println("Starting server")
 	router := mux.NewRouter().UseEncodedPath() //.StrictSlash(true)
+	router.Use(loggingMiddleware)
 	router.Use(prometheusMiddleware)
 	router.HandleFunc("/", Index)
 	router.Handle("/metrics", promhttp.Handler())
@@ -169,4 +170,13 @@ func main() {
 
 func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "TMS root")
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Do stuff here
+		log.Println(r.RequestURI)
+		// Call the next handler, which can be another middleware in the chain, or the final handler.
+		next.ServeHTTP(w, r)
+	})
 }
