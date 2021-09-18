@@ -40,7 +40,7 @@ func TestGetNetworkSamplesInRange(t *testing.T) {
 
 	// https://tile.openstreetmap.org/14/9050/9835.png - Stellebosch Central
 	// https://stamen-tiles-d.a.ssl.fastly.net/toner-lite/12/2170/1345.png - wolfsburg central
-	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(2170, 1345, 12, 0)
+	xMin, yMin, xMax, yMax := GetZ19TileRangeBuffer(2170, 1345, 12, 0)
 	//networkId := "thethingsnetwork.org"
 	networkId := "NS_CHIRP://wolfsburg.digital"
 	//networkId := "NS_TTS_V3://ttn@000013"
@@ -52,7 +52,7 @@ func TestGetGatewaySamplesInRange(t *testing.T) {
 	initDb()
 
 	// https://tile.openstreetmap.org/14/9050/9835.png - Stellebosch Central
-	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(9050, 9835, 14, 0)
+	xMin, yMin, xMax, yMax := GetZ19TileRangeBuffer(9050, 9835, 14, 0)
 	gatewayId := "eui-60c5a8fffe761551"
 	networkId := "thethingsnetwork.org"
 	//networkId := "NS_TTS_V3://ttn@000013"

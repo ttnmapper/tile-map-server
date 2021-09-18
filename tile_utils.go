@@ -1,6 +1,7 @@
 package main
 
 import (
+	"math"
 	"os"
 	"time"
 	"ttnmapper-tms/types"
@@ -40,7 +41,7 @@ func GetCacheDurationForZoom(z int) time.Duration {
 	return 0
 }
 
-func getZ19TileRangeBuffer(xOuter int, yOuter int, z int, buffer int) (xMin int, yMin int, xMax int, yMax int) {
+func GetZ19TileRangeBuffer(xOuter int, yOuter int, z int, buffer float64) (xMin int, yMin int, xMax int, yMax int) {
 
 	/*
 		+-----------+-----------+
@@ -50,10 +51,10 @@ func getZ19TileRangeBuffer(xOuter int, yOuter int, z int, buffer int) (xMin int,
 		+-----------+-----------+
 	*/
 	// Select one tile size extra to all sides. ie 9 tile
-	xNw := xOuter - buffer
-	yNw := yOuter - buffer
-	xSe := xOuter + 1 + buffer
-	ySe := yOuter + 1 + buffer
+	xNw := float64(xOuter) - buffer
+	yNw := float64(yOuter) - buffer
+	xSe := float64(xOuter) + 1 + buffer
+	ySe := float64(yOuter) + 1 + buffer
 
 	for ; z < 19; z++ {
 		xNw *= 2
@@ -63,7 +64,11 @@ func getZ19TileRangeBuffer(xOuter int, yOuter int, z int, buffer int) (xMin int,
 		ySe *= 2
 	}
 
-	return xNw, yNw, xSe, ySe
+	xNw = math.Floor(xNw)
+	yNw = math.Floor(yNw)
+	xSe = math.Ceil(xSe)
+	ySe = math.Ceil(ySe)
+	return int(xNw), int(yNw), int(xSe), int(ySe)
 }
 
 func getMaxBucket(gridCell types.GridCell) int {

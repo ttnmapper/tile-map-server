@@ -24,7 +24,7 @@
 <script>
 
     // var mymap = L.map('mapid').setView([-33.934174, 18.863869], 15);
-    var mymap = L.map('mapid').setView([-33.937076, 18.87107], 19);
+    var mymap = L.map('mapid').setView([-33.937076, 18.87107], 15);
 
     // L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
     //     maxZoom: 18,
@@ -71,13 +71,16 @@
 
     mymap.on('click', onMapClick);
 
-    // var coveragetiles = L.tileLayer('http://localhost:8080/circles/{z}/{x}/{y}.png', {
+    var coveragetiles = L.tileLayer('http://localhost:8081/circles/network/{network_id}/{z}/{x}/{y}.png', {
+    // var coveragetiles = L.tileLayer('http://localhost:8081/circles/gateway/{network_id}/{gateway_id}/{z}/{x}/{y}.png', {
     // var coveragetiles = L.tileLayer('https://tms.ttnmapper.org/circles/{z}/{x}/{y}.png', {
-    	var coveragetiles = L.tileLayer('https://ttnmapperfsa4if0y-tilemapserver.functions.fnc.fr-par.scw.cloud/circles/{z}/{x}/{y}.png', {
+    // 	var coveragetiles = L.tileLayer('https://ttnmapperfsa4if0y-tilemapserver.functions.fnc.fr-par.scw.cloud/circles/{z}/{x}/{y}.png', {
         maxNativeZoom: 19,
         maxZoom: 20,
         zIndex: 10,
-        opacity: 0.5
+        opacity: 0.5,
+        network_id: encodeURIComponent("NS_TTS_V3://ttn@000013"),
+        gateway_id: encodeURIComponent("at-outdoor-gateway-babylonstoren-01")
     });
     coveragetiles.addTo(mymap);
 

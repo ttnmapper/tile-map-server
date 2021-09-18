@@ -89,7 +89,7 @@ func GetBlocksTile(w http.ResponseWriter, r *http.Request) {
 	//tileStart := time.Now()
 
 	// Circles can overlap tiles, so select data for 1 tile buffer on all sides
-	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(x, y, z, 0)
+	xMin, yMin, xMax, yMax := GetZ19TileRangeBuffer(x, y, z, 0)
 
 	//log.Println("Selecting data")
 	var samples []types.Sample
@@ -119,7 +119,7 @@ func CreateGlobalBlocksTile(x int, y int, z int, samples []types.Sample) image.I
 	// Draw image for x-1, y-1 to x+2, y+2
 
 	// Z19 indexes are:
-	xMin, yMin, xMax, yMax := getZ19TileRangeBuffer(x, y, z, 0)
+	xMin, yMin, xMax, yMax := GetZ19TileRangeBuffer(x, y, z, 0)
 	xWidth := float64(xMax - xMin)
 	yWidth := float64(yMax - yMin) // always the same ??
 
