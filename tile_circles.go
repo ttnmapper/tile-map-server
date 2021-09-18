@@ -123,7 +123,6 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		} else {
 			samples = GetNetworkSamplesInRange(networkId, xMin, yMin, xMax, yMax)
 		}
-		log.Println("Samples", len(samples))
 
 		// Sort by RSSI ascending
 		sort.Sort(types.ByRssi(samples))
