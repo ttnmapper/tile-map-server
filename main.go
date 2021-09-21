@@ -19,10 +19,10 @@ Technopark https://tile.openstreetmap.org/15/18098/19674.png
 */
 
 type Configuration struct {
-	CacheDirCircles string
-	CacheDirBlocks  string
+	CacheDirCircles string `env:"CACHE_DIR_CIRCLES"`
+	CacheDirBlocks  string `env:"CACHE_DIR_BLOCKS"`
 
-	CacheEnabled bool
+	CacheEnabled bool `env:"CACHE_ENABLED"`
 
 	PostgresHost     string `env:"POSTGRES_HOST"`
 	PostgresPort     string `env:"POSTGRES_PORT"`
