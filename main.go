@@ -6,6 +6,7 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/lib/pq"
+	"github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/tkanos/gonfig"
@@ -38,7 +39,7 @@ var myConfiguration = Configuration{
 	CacheDirCircles: "./tile_cache/global_circles",
 	CacheDirBlocks:  "./tile_cache/global_blocks",
 
-	CacheEnabled: true,
+	CacheEnabled: false,
 
 	PostgresHost:     "localhost",
 	PostgresPort:     "5432",
@@ -102,6 +103,8 @@ var (
 
 	// Other global vars
 	db *gorm.DB
+
+	antennaLastHeardCache *cache.Cache
 )
 
 func prometheusMiddleware(next http.Handler) http.Handler {
@@ -145,6 +148,9 @@ func main() {
 	if myConfiguration.PostgresDebugLog {
 		db.LogMode(true)
 	}
+
+	// Cache
+	antennaLastHeardCache = cache.New(1*time.Hour, 2*time.Hour)
 
 	// Register prometheus stats
 	prometheus.MustRegister(promTmsRequestDuration)

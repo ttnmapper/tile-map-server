@@ -2,9 +2,11 @@ package main
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/patrickmn/go-cache"
 	"github.com/tkanos/gonfig"
 	"log"
 	"testing"
+	"time"
 )
 
 func initDb() {
@@ -58,4 +60,12 @@ func TestGetGatewaySamplesInRange(t *testing.T) {
 	//networkId := "NS_TTS_V3://ttn@000013"
 	data := GetGatewaySamplesInRange(networkId, gatewayId, xMin, yMin, xMax, yMax)
 	log.Println(data)
+}
+
+func TestGetAntennaOnline(t *testing.T) {
+	initDb()
+	antennaLastHeardCache = cache.New(1*time.Hour, 2*time.Hour)
+
+	log.Println(GetAntennaOnline(1200))
+	log.Println(GetAntennaOnline(1200))
 }
