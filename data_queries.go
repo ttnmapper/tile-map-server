@@ -49,8 +49,6 @@ func GetNetworkSamplesInRange(networkId string, xMin int, yMin int, xMax int, yM
 	var samples []types.Sample
 	var gridCells []types.GridCell
 
-	// TODO only select data for gateways that are online
-
 	// Group by x and y and sum all buckets
 	db.Table("grid_cells").
 		Select("antenna_id, x, y, sum(bucket_high) as bucket_high, "+
