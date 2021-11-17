@@ -56,9 +56,9 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 
 	tileFileName := ""
 	if singleGateway {
-		tileFileName = fmt.Sprintf("%s/gateway/%s/%s/%d/%d/%d.png", myConfiguration.CacheDirCircles, networkId, gatewayId, z, x, y)
+		tileFileName = fmt.Sprintf("%s/gateway/%s/%s/%d/%d/%d.png", myConfiguration.CacheDirCircles, url.QueryEscape(networkId), url.QueryEscape(gatewayId), z, x, y)
 	} else {
-		tileFileName = fmt.Sprintf("%s/network/%s/%d/%d/%d.png", myConfiguration.CacheDirCircles, networkId, z, x, y)
+		tileFileName = fmt.Sprintf("%s/network/%s/%d/%d/%d.png", myConfiguration.CacheDirCircles, url.QueryEscape(networkId), z, x, y)
 	}
 
 	tileInCacheOutdated := true
