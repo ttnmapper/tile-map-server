@@ -158,6 +158,7 @@ func main() {
 	antennaLastHeardCache = cache.New(5*time.Minute, 10*time.Minute)
 
 	// Register prometheus stats
+	prometheus.MustRegister(promAntennaCacheItemCount)
 	prometheus.MustRegister(promTmsRequestDuration)
 	prometheus.MustRegister(promTmsGlobalSelectDuration)
 	prometheus.MustRegister(promTmsGatewaySelectDuration)
