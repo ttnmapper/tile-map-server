@@ -140,6 +140,7 @@ func GetAntennaOnline(antennaId uint) bool {
 
 	// Store in cache
 	antennaLastHeardCache.Set(strconv.Itoa(int(antennaId)), result.LastHeard, cache.DefaultExpiration)
+	promAntennaCacheItemCount.Set(float64(antennaLastHeardCache.ItemCount()))
 
 	if result.LastHeard.Before(fiveDaysAgo) {
 		return false

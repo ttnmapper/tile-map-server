@@ -90,6 +90,11 @@ var (
 	//	Buckets: []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.5, 2, 5, 10, 100, 1000, 10000},
 	//})
 
+	promAntennaCacheItemCount = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "ttnmapper_tms_antenna_cache_size",
+		Help: "Size of the memory cache that holds antennas previously read from the database",
+	})
+
 	promTmsGlobalSelectDuration = prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "ttnmapper_tms_select_global_duration",
 		Help:    "Duration of selecting global data for one tile from the database",
@@ -150,7 +155,7 @@ func main() {
 	}
 
 	// Cache
-	antennaLastHeardCache = cache.New(1*time.Hour, 2*time.Hour)
+	antennaLastHeardCache = cache.New(5*time.Minute, 10*time.Minute)
 
 	// Register prometheus stats
 	prometheus.MustRegister(promTmsRequestDuration)
