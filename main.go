@@ -153,6 +153,15 @@ func main() {
 		panic(err.Error())
 	}
 
+	// Get generic database object sql.DB to use its functions
+	sqlDB, err := db.DB()
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(2)
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	sqlDB.SetMaxOpenConns(5)
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	sqlDB.SetConnMaxLifetime(10 * time.Minute)
+
 	// Cache
 	antennaLastHeardCache = cache.New(5*time.Minute, 10*time.Minute)
 
