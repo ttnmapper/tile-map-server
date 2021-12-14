@@ -12,6 +12,7 @@ import (
 	"gorm.io/gorm/logger"
 	"log"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"path/filepath"
 	"time"
@@ -177,6 +178,7 @@ func main() {
 	router.Use(prometheusMiddleware)
 	router.HandleFunc("/", Index)
 	router.Handle("/metrics", promhttp.Handler())
+	router.PathPrefix("/debug/pprof/").Handler(http.DefaultServeMux)
 
 	// Tile endpoints
 	router.HandleFunc("/circles/network/{network_id}/{z}/{x}/{y}", GetCirclesTile)
