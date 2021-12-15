@@ -33,13 +33,13 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 
 	z, err := strconv.Atoi(vars["z"])
 	if err != nil {
-		fmt.Fprintln(w, "Z invalid")
+		log.Println(w, "Z invalid")
 		return
 	}
 
 	x, err := strconv.Atoi(vars["x"])
 	if err != nil {
-		fmt.Fprintln(w, "X invalid")
+		log.Println(w, "X invalid")
 		return
 	}
 
@@ -48,7 +48,7 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 	}
 	y, err := strconv.Atoi(vars["y"])
 	if err != nil {
-		fmt.Fprintln(w, "Y invalid")
+		log.Println(w, "Y invalid")
 		return
 	}
 
@@ -81,19 +81,25 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 
 	// Only cache global tiles, not per gateway tiles
 	if myConfiguration.CacheEnabled && tileExistInCache && !tileInCacheOutdated && !singleGateway {
-		fmt.Printf("serving from cache\n")
+		log.Printf("serving from cache\n")
 		//promTmsCirclesCacheCount.Inc()
 
 		//Check if file exists and open
 		openFile, err := os.Open(tileFileName)
-		defer openFile.Close() //Close after function returns
 		if err != nil {
 			//File not found, send 404
 			http.Error(w, "File not found.", 404)
 			return
 		}
 
-		io.Copy(w, openFile) //'Copy' the file to the client
+		_, err = io.Copy(w, openFile) //'Copy' the file to the client
+		if err != nil {
+			log.Println(err.Error())
+		}
+		err = openFile.Close() //Close after function returns
+		if err != nil {
+			log.Println(err.Error())
+		}
 
 	} else {
 		log.Printf("generating tile\n")
@@ -133,7 +139,10 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 			StoreTileInFile(tile, tileFileName)
 		}
 
-		png.Encode(w, tile)
+		err = png.Encode(w, tile)
+		if err != nil {
+			log.Println(err.Error())
+		}
 
 		// Prometheus stats
 		//gatewayElapsed := time.Since(tileStart)
@@ -209,12 +218,18 @@ func StoreTileInFile(tile image.Image, filename string) {
 	tileFolderName := filename[:strings.LastIndex(filename, "/")]
 	CreateDirIfNotExist(tileFolderName)
 
-	newImage, _ := os.Create(filename)
-
-	err := png.Encode(newImage, tile)
+	newImage, err := os.Create(filename)
 	if err != nil {
-		log.Print(err.Error())
+		log.Println(err.Error())
 	}
 
-	_ = newImage.Close()
+	err = png.Encode(newImage, tile)
+	if err != nil {
+		log.Println(err.Error())
+	}
+
+	err = newImage.Close()
+	if err != nil {
+		log.Println(err.Error())
+	}
 }

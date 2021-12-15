@@ -1,10 +1,14 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/patrickmn/go-cache"
 	"github.com/tkanos/gonfig"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"log"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -17,24 +21,21 @@ func initDb() {
 
 	log.Printf("[Configuration]\n%s\n", prettyPrint(myConfiguration)) // output: [UserA, UserB]
 
-	// Table name prefixes
-	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-		//return "ttnmapper_" + defaultTableName
-		return defaultTableName
+	var gormLogLevel = logger.Silent
+	if myConfiguration.PostgresDebugLog {
+		log.Println("Database debug logging enabled")
+		gormLogLevel = logger.Info
 	}
 
-	var dbErr error
-	// pq: unsupported sslmode "prefer"; only "require" (default), "verify-full", "verify-ca", and "disable" supported - so we disable it
-	db, dbErr = gorm.Open("postgres", "host="+myConfiguration.PostgresHost+" port="+myConfiguration.PostgresPort+" user="+myConfiguration.PostgresUser+" dbname="+myConfiguration.PostgresDatabase+" password="+myConfiguration.PostgresPassword+" sslmode=disable")
-	if dbErr != nil {
-		log.Println("Error connecting to Postgres")
-		panic(dbErr.Error())
+	dsn := "host=" + myConfiguration.PostgresHost + " port=" + myConfiguration.PostgresPort + " user=" + myConfiguration.PostgresUser +
+		" dbname=" + myConfiguration.PostgresDatabase + " password=" + myConfiguration.PostgresPassword + " sslmode=disable" +
+		" application_name=" + filepath.Base(os.Args[0])
+	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(gormLogLevel),
+	})
+	if err != nil {
+		panic(err.Error())
 	}
-	//defer db.Close()
-
-	//if myConfiguration.PostgresDebugLog {
-	db.LogMode(true)
-	//}
 }
 
 func TestGetNetworkSamplesInRange(t *testing.T) {
