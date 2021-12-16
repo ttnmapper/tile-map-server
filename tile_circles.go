@@ -85,18 +85,18 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		//promTmsCirclesCacheCount.Inc()
 
 		//Check if file exists and open
-		openFile, err := os.Open(tileFileName)
+		tileFile, err := os.Open(tileFileName)
 		if err != nil {
 			//File not found, send 404
 			http.Error(w, "File not found.", 404)
 			return
 		}
 
-		_, err = io.Copy(w, openFile) //'Copy' the file to the client
+		_, err = io.Copy(w, tileFile) //'Copy' the file to the client
 		if err != nil {
 			log.Println(err.Error())
 		}
-		err = openFile.Close() //Close after function returns
+		err = tileFile.Close() //Close after function returns
 		if err != nil {
 			log.Println(err.Error())
 		}

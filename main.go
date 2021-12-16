@@ -164,7 +164,7 @@ func main() {
 	sqlDB.SetConnMaxLifetime(10 * time.Minute)
 
 	// Cache
-	antennaLastHeardCache = cache.New(5*time.Minute, 10*time.Minute)
+	antennaLastHeardCache = cache.New(5*time.Minute, 1*time.Minute)
 
 	// Register prometheus stats
 	prometheus.MustRegister(promAntennaCacheItemCount)
@@ -186,12 +186,17 @@ func main() {
 	router.HandleFunc("/circles/gateway/{network_id}/{gateway_id}/{z}/{x}/{y}", GetCirclesTile)
 	router.HandleFunc("/blocks/gateway/{network_id}/{gateway_id}/{z}/{x}/{y}", GetBlocksTile)
 
-	log.Fatal(http.ListenAndServe(myConfiguration.ListenAddress, router))
+	routerWithTimeout := http.TimeoutHandler(router, time.Minute*1, "Handler Timeout!")
+	log.Fatal(http.ListenAndServe(myConfiguration.ListenAddress, routerWithTimeout))
 
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "TMS root")
+	_, err := fmt.Fprintln(w, "TMS root")
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {
