@@ -8,30 +8,30 @@ import (
 )
 
 func GetCacheDurationForZoom(z int) time.Duration {
-	if z >= 18 {
-		return 0 * time.Second // always redraw
-	}
-	if z >= 16 {
-		return 10 * time.Minute
-	}
-	if z >= 14 {
-		return 60 * time.Minute
-	}
-	if z >= 12 {
-		return 2 * time.Hour
-	}
-	if z >= 10 {
-		return 4 * time.Hour
-	}
-	if z >= 8 {
-		return 8 * time.Hour
-	}
-	if z >= 6 {
-		return 10 * time.Hour
-	}
-	if z >= 4 {
-		return 12 * time.Hour
-	}
+	//if z >= 18 {
+	//	return 0 * time.Second // always redraw
+	//}
+	//if z >= 16 {
+	//	return 10 * time.Minute
+	//}
+	//if z >= 14 {
+	//	return 60 * time.Minute
+	//}
+	//if z >= 12 {
+	//	return 2 * time.Hour
+	//}
+	//if z >= 10 {
+	//	return 4 * time.Hour
+	//}
+	//if z >= 8 {
+	//	return 8 * time.Hour
+	//}
+	//if z >= 6 {
+	//	return 10 * time.Hour
+	//}
+	//if z >= 4 {
+	//	return 12 * time.Hour
+	//}
 	//if z <= 2 {
 	//	return 14*time.Hour
 	//}
