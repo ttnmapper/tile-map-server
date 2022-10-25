@@ -69,7 +69,7 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		modifiedTime := file.ModTime()
 
 		// Check the last modified time of the file to see if the time is still new enough
-		if modifiedTime.Add(GetCacheDurationForZoom(z)).After(time.Now()) {
+		if modifiedTime.Add(GetCacheDurationForZoom(z) * 2).After(time.Now()) {
 			tileInCacheOutdated = false
 		}
 	}
