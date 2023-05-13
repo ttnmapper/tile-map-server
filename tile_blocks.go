@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"ttnmapper-tms/types"
 )
 
@@ -104,6 +105,11 @@ func GetBlocksTile(w http.ResponseWriter, r *http.Request) {
 
 	// Do something with tile data
 	tile := CreateGlobalBlocksTile(x, y, z, samples)
+
+	// Set cache headers in the response
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	w.Header().Set("Expires", time.Now().Add(24*time.Hour).Format(http.TimeFormat))
+	w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
 
 	png.Encode(w, tile)
 

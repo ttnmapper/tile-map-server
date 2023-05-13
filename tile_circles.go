@@ -139,6 +139,11 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 			StoreTileInFile(tile, tileFileName)
 		}
 
+		// Set cache headers in the response
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Header().Set("Expires", time.Now().Add(24*time.Hour).Format(http.TimeFormat))
+		w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
+
 		err = png.Encode(w, tile)
 		if err != nil {
 			log.Println(err.Error())
