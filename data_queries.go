@@ -43,14 +43,14 @@ import (
 //}
 
 // Return all grid cells from database between a range of z19 x and y indexes
-func GetNetworkSamplesInRange(networkId string, xMin int, yMin int, xMax int, yMax int) []types.Sample {
+func GetNetworkSamplesInRange(networkId string, xMin int, yMin int, xMax int, yMax int) ([]types.Sample, error) {
 	selectStart := time.Now()
 
 	var samples []types.Sample
 	var gridCells []types.GridCell
 
 	// Group by x and y and sum all buckets
-	db.Table("grid_cells").
+	err := db.Table("grid_cells").
 		Select("antenna_id, x, y, sum(bucket_high) as bucket_high, "+
 			"sum(bucket100) as bucket100, sum(bucket105) as bucket105, "+
 			"sum(bucket110) as bucket110, sum(bucket115) as bucket115, "+
@@ -62,7 +62,11 @@ func GetNetworkSamplesInRange(networkId string, xMin int, yMin int, xMax int, yM
 		Where("antennas.network_id= ?", networkId).
 		Where("x >= ? AND x <= ? AND y >= ? AND y <= ?", xMin, xMax, yMin, yMax).
 		Group("antenna_id, x, y").
-		Find(&gridCells)
+		Find(&gridCells).Error
+
+	if err != nil {
+		return samples, err
+	}
 
 	for _, gridCell := range gridCells {
 		if GetAntennaOnline(gridCell.AntennaID) {
@@ -75,18 +79,18 @@ func GetNetworkSamplesInRange(networkId string, xMin int, yMin int, xMax int, yM
 	selectElapsed := time.Since(selectStart)
 	promTmsGlobalSelectDuration.Observe(float64(selectElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
 
-	return samples
+	return samples, nil
 }
 
 // Samples are group by gateway, so it will sum all antennas
-func GetGatewaySamplesInRange(networkId string, gatewayId string, xMin int, yMin int, xMax int, yMax int) []types.Sample {
+func GetGatewaySamplesInRange(networkId string, gatewayId string, xMin int, yMin int, xMax int, yMax int) ([]types.Sample, error) {
 	selectStart := time.Now()
 
 	var samples []types.Sample
 	var gridCells []types.GridCell
 
 	// Group by x and y and sum all buckets
-	db.Table("grid_cells").
+	err := db.Table("grid_cells").
 		Select("x, y, sum(bucket_high) as bucket_high, "+
 			"sum(bucket100) as bucket100, sum(bucket105) as bucket105, "+
 			"sum(bucket110) as bucket110, sum(bucket115) as bucket115, "+
@@ -99,7 +103,11 @@ func GetGatewaySamplesInRange(networkId string, gatewayId string, xMin int, yMin
 		Where("antennas.gateway_id = ?", gatewayId).
 		Where("x >= ? AND x <= ? AND y >= ? AND y <= ?", xMin, xMax, yMin, yMax).
 		Group("x, y").
-		Find(&gridCells)
+		Find(&gridCells).Error
+
+	if err != nil {
+		return samples, err
+	}
 
 	for _, gridCell := range gridCells {
 		sample := types.Sample{X: gridCell.X, Y: gridCell.Y, MaxBucketIndex: getMaxBucket(gridCell)}
@@ -110,7 +118,7 @@ func GetGatewaySamplesInRange(networkId string, gatewayId string, xMin int, yMin
 	selectElapsed := time.Since(selectStart)
 	promTmsGatewaySelectDuration.Observe(float64(selectElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
 
-	return samples
+	return samples, nil
 }
 
 func GetAntennaOnline(antennaId uint) bool {

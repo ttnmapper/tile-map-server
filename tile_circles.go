@@ -34,12 +34,14 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 	z, err := strconv.Atoi(vars["z"])
 	if err != nil {
 		log.Println(w, "Z invalid")
+		http.Error(w, "z invalid", http.StatusBadRequest)
 		return
 	}
 
 	x, err := strconv.Atoi(vars["x"])
 	if err != nil {
 		log.Println(w, "X invalid")
+		http.Error(w, "x invalid", http.StatusBadRequest)
 		return
 	}
 
@@ -49,6 +51,7 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 	y, err := strconv.Atoi(vars["y"])
 	if err != nil {
 		log.Println(w, "Y invalid")
+		http.Error(w, "y invalid", http.StatusBadRequest)
 		return
 	}
 
@@ -95,10 +98,14 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		_, err = io.Copy(w, tileFile) //'Copy' the file to the client
 		if err != nil {
 			log.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		err = tileFile.Close() //Close after function returns
 		if err != nil {
 			log.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 	} else {
@@ -125,9 +132,15 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		//log.Println("Selecting data")
 		var samples []types.Sample
 		if singleGateway {
-			samples = GetGatewaySamplesInRange(networkId, gatewayId, xMin, yMin, xMax, yMax)
+			samples, err = GetGatewaySamplesInRange(networkId, gatewayId, xMin, yMin, xMax, yMax)
 		} else {
-			samples = GetNetworkSamplesInRange(networkId, xMin, yMin, xMax, yMax)
+			samples, err = GetNetworkSamplesInRange(networkId, xMin, yMin, xMax, yMax)
+		}
+
+		// Database error
+		if err != nil {
+			http.Error(w, "database error", http.StatusInternalServerError)
+			return
 		}
 
 		// Sort by RSSI ascending
@@ -147,6 +160,8 @@ func GetCirclesTile(w http.ResponseWriter, r *http.Request) {
 		err = png.Encode(w, tile)
 		if err != nil {
 			log.Println(err.Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
 		// Prometheus stats
