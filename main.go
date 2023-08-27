@@ -192,7 +192,7 @@ func main() {
 }
 
 func Index(w http.ResponseWriter, r *http.Request) {
-	_, err := fmt.Fprintln(w, "TMS root")
+	_, err := fmt.Fprintf(w, "TMS root\n%s", time.Now().String())
 	if err != nil {
 		log.Println(err.Error())
 		return
