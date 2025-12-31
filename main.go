@@ -2,6 +2,13 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"path/filepath"
+	"time"
+
 	"github.com/gorilla/mux"
 	"github.com/patrickmn/go-cache"
 	"github.com/prometheus/client_golang/prometheus"
@@ -10,12 +17,6 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"net/http"
-	_ "net/http/pprof"
-	"os"
-	"path/filepath"
-	"time"
 )
 
 /*
